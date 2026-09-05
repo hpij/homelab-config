@@ -1,9 +1,24 @@
+## `context/hosts/pi4.md`
+
 # pi4
 
-This Raspberry Pi is LAN-only and must not be directly reachable from the Internet. SSH is
-intentionally available within the LAN. A host firewall and Fail2Ban are not required by the
-current LAN-only threat model.
+## Purpose
 
-Pi-hole provides LAN DNS. Unbound on localhost provides recursive DNS for Pi-hole; both are native
-services on this host.
+* Provides LAN DNS for the home network.
+* Pi-hole and Unbound form the host's DNS stack.
 
+## Network & Exposure
+
+* Intended for LAN-only operation.
+* Direct Internet reachability is not expected.
+* SSH access within the LAN is intentional.
+
+## Security Baseline
+
+* A host firewall is not required by the current LAN-only threat model.
+* Fail2Ban is not required by the current LAN-only threat model.
+
+## Services & Dependencies
+
+* Pi-hole provides DNS service to the LAN.
+* Unbound runs locally as the recursive DNS resolver used by Pi-hole.

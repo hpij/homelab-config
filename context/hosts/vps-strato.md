@@ -1,15 +1,32 @@
 # vps-strato
 
-This private, single-administrator VPS is the only managed host intended to be directly reachable
-from the public Internet.
+## Purpose
 
-UFW denies incoming traffic by default. Only SSH on TCP port 22 may be directly Internet-reachable;
-SSH is key-only, root and password login are disabled, and Fail2Ban protects SSH. Web services are
-exposed through the Docker-managed Cloudflare Tunnel. Web containers must not publish ports on
-`0.0.0.0` or `[::]`; required Nextcloud AIO loopback bindings on `127.0.0.1` are expected.
+* Private, single-administrator VPS.
+* The only managed host intended to be directly reachable from the public Internet.
 
-The sole administrator is intentionally trusted with sudo and Docker administration. Passwordless
-sudo is an accepted choice for this single-admin host. Preinstalled LXD from the Snap ecosystem is
-accepted; unused LXD is not drift. This accepted capability is distinct from the mechanisms that
-the central updater currently manages.
+## Network & Exposure
 
+* Direct Internet exposure is intentionally limited to SSH on TCP port `22`.
+* Web services are exposed through the Docker-managed Cloudflare Tunnel.
+* Ordinary web containers must not publish ports on `0.0.0.0` or `[::]`.
+* Required Nextcloud AIO loopback bindings on `127.0.0.1` are expected and are not public exposure.
+
+## Security Baseline
+
+* UFW denies incoming traffic by default.
+* SSH authentication is key-only.
+* SSH root login is disabled.
+* SSH password login is disabled.
+* Fail2Ban protects SSH.
+* The sole administrator is intentionally trusted with sudo and Docker administration.
+* Passwordless sudo is an accepted choice for this single-administrator host.
+
+## Services & Dependencies
+
+* Cloudflare Tunnel provides the intended ingress path for web services.
+* Nextcloud AIO uses required loopback bindings on `127.0.0.1` as part of its expected architecture.
+
+## Software & Lifecycle Notes
+
+* The preinstalled and unused Snap/LXD environment is accepted on this host.
