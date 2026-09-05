@@ -1,0 +1,23 @@
+host_id: pi5
+
+access:
+  type: ssh
+  host: pi5
+
+operator:
+  user: pi
+  sudo: passwordless
+
+software:
+  package_managers:
+    apt: {}
+  runtimes:
+    docker:
+      workload_desired_state_owner: homelab-docker
+  components: {}
+
+management:
+  homelab_update:
+    mechanisms:
+      - apt
+

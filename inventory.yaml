@@ -1,0 +1,11 @@
+schema_version: 1
+
+hosts:
+  - yip-i3wm
+  - pi4
+  - pi5
+  - vps-strato
+
+appliances:
+  - home-assistant-green
+

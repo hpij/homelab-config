@@ -1,0 +1,30 @@
+host_id: vps-strato
+
+access:
+  type: ssh
+  host: vps
+
+operator:
+  user: yip
+  sudo: passwordless
+
+software:
+  package_managers:
+    apt: {}
+    snap: {}
+  runtimes:
+    docker:
+      workload_desired_state_owner: homelab-docker
+  components:
+    nextcloud_aio: {}
+
+management:
+  homelab_update:
+    mechanisms:
+      - apt
+      - nextcloud_aio
+
+context:
+  include:
+    - exceptions/nextcloud-aio
+

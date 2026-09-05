@@ -1,0 +1,25 @@
+host_id: pi4
+
+access:
+  type: ssh
+  host: pi4
+
+operator:
+  user: pi
+  sudo: passwordless
+
+software:
+  package_managers:
+    apt: {}
+  runtimes:
+    docker:
+      workload_desired_state_owner: homelab-docker
+  components:
+    pihole: {}
+
+management:
+  homelab_update:
+    mechanisms:
+      - apt
+      - pihole
+

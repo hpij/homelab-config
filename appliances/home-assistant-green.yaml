@@ -1,0 +1,10 @@
+appliance_id: home-assistant-green
+kind: home_assistant
+name: Home Assistant Green
+
+access:
+  type: ssh
+  host: homeassistant.local
+
+user: hassio
+

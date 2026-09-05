@@ -1,0 +1,36 @@
+host_id: yip-i3wm
+
+access:
+  type: local
+
+operator:
+  user: yip
+  sudo: password_required
+
+availability:
+  mode: on_demand
+
+software:
+  package_managers:
+    apt: {}
+    flatpak: {}
+    snap: {}
+  runtimes:
+    docker:
+      workload_desired_state_owner: homelab-docker
+    libvirt: {}
+  components:
+    hermes: {}
+
+management:
+  homelab_update:
+    mechanisms:
+      - apt
+      - flatpak
+      - snap
+      - hermes
+
+context:
+  include:
+    - exceptions/odysseus
+
