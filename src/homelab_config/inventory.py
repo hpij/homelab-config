@@ -27,7 +27,7 @@ from .models import (
 )
 from .yaml_input import load_yaml_file
 
-SCHEMA_VERSION = 1
+INVENTORY_SCHEMA_VERSION = 1
 CONFIG_ROOT_ENV = "HOMELAB_CONFIG_ROOT"
 SUPPORTED_ACCESS_TYPES = frozenset({"local", "ssh"})
 SUPPORTED_SUDO_MODES = frozenset({"password_required", "passwordless"})
@@ -62,9 +62,10 @@ def load_inventory(config_root: str | Path | None = None) -> Inventory:
     root = resolve_config_root(config_root)
     index = _mapping(load_yaml_file(root / "inventory.yaml", "inventory index"), "inventory")
     _keys(index, {"schema_version", "hosts", "appliances"}, set(), "inventory")
-    if index["schema_version"] != SCHEMA_VERSION:
+    if index["schema_version"] != INVENTORY_SCHEMA_VERSION:
         raise ConfigurationError(
-            f"inventory schema_version must be {SCHEMA_VERSION}, got {index['schema_version']!r}"
+            "inventory schema_version must be "
+            f"{INVENTORY_SCHEMA_VERSION}, got {index['schema_version']!r}"
         )
 
     host_ids = _id_list(index["hosts"], "inventory hosts")
@@ -110,11 +111,6 @@ def _load_host(path: Path, indexed_id: str) -> Host:
 
     access = _parse_access(fields["access"], f"host '{host_id}'")
     operator = _parse_operator(fields["operator"], host_id)
-    if access.access_type == "local" and operator.sudo != "password_required":
-        raise ConfigurationError(f"local host '{host_id}' requires sudo=password_required")
-    if access.access_type == "ssh" and operator.sudo != "passwordless":
-        raise ConfigurationError(f"SSH host '{host_id}' requires sudo=passwordless")
-
     availability = (
         _parse_availability(fields["availability"], host_id) if "availability" in fields else None
     )

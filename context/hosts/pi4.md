@@ -1,5 +1,3 @@
-## `context/hosts/pi4.md`
-
 # pi4
 
 ## Purpose

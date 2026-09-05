@@ -232,19 +232,22 @@ def test_ssh_host_missing_endpoint_is_rejected(config_root: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    ("host_id", "sudo", "message"),
-    [
-        ("yip-i3wm", "passwordless", "local host.*password_required"),
-        ("pi5", "password_required", "SSH host.*passwordless"),
-    ],
+    ("host_id", "sudo"),
+    [("yip-i3wm", "passwordless"), ("pi5", "password_required")],
 )
-def test_contradictory_access_and_sudo_contract_is_rejected(
-    config_root: Path, host_id: str, sudo: str, message: str
-) -> None:
+def test_access_and_sudo_modes_are_independent(config_root: Path, host_id: str, sudo: str) -> None:
     document = _read_host(config_root, host_id)
     document["operator"]["sudo"] = sudo  # type: ignore[index]
     _write_host(config_root, host_id, document)
-    with pytest.raises(ConfigurationError, match=message):
+    host = load_inventory(config_root).host(host_id)
+    assert host.operator.sudo == sudo
+
+
+def test_invalid_sudo_enum_still_fails_closed(config_root: Path) -> None:
+    document = _read_host(config_root, "pi5")
+    document["operator"]["sudo"] = "maybe"  # type: ignore[index]
+    _write_host(config_root, "pi5", document)
+    with pytest.raises(ConfigurationError, match="unsupported sudo mode: maybe"):
         load_inventory(config_root)
 
 

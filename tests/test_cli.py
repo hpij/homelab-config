@@ -40,8 +40,11 @@ def test_list_hosts_and_appliances_are_in_exact_index_order(config_root: Path) -
     }
 
 
-def test_resolve_host_exact_ssh_compatibility_contract(config_root: Path) -> None:
-    code, stdout, stderr = invoke(config_root, ["resolve-host", "vps-strato", "--json", "compact"])
+@pytest.mark.parametrize("json_arguments", [["--json", "compact"], ["--json=compact"]])
+def test_resolve_host_exact_ssh_compatibility_contract(
+    config_root: Path, json_arguments: list[str]
+) -> None:
+    code, stdout, stderr = invoke(config_root, ["resolve-host", "vps-strato", *json_arguments])
     assert code == 0
     assert stderr == ""
     assert stdout == (
@@ -65,8 +68,11 @@ def test_resolve_local_host_has_null_ssh_target(config_root: Path) -> None:
     assert json.loads(stdout)["ssh_target"] is None
 
 
-def test_resolve_host_rejects_endpoint_alias_with_clean_json(config_root: Path) -> None:
-    code, stdout, stderr = invoke(config_root, ["resolve-host", "vps", "--json", "compact"])
+@pytest.mark.parametrize("json_arguments", [["--json", "compact"], ["--json=compact"]])
+def test_resolve_host_rejects_endpoint_alias_with_clean_json(
+    config_root: Path, json_arguments: list[str]
+) -> None:
+    code, stdout, stderr = invoke(config_root, ["resolve-host", "vps", *json_arguments])
     document = json.loads(stdout)
 
     assert code == 30
@@ -188,6 +194,25 @@ def test_invalid_configuration_json_stdout_is_valid_and_diagnostics_are_separate
 
     assert code == 30
     assert json.loads(stdout)["error_code"] == "CONFIGURATION_ERROR"
+    assert stderr.startswith("error:")
+    assert "error:" not in stdout
+
+
+@pytest.mark.parametrize("json_arguments", [["--json", "compact"], ["--json=compact"]])
+def test_configuration_failure_json_spellings_are_identical(
+    config_root: Path, json_arguments: list[str]
+) -> None:
+    (config_root / "hosts" / "pi5.yaml").unlink()
+    code, stdout, stderr = invoke(config_root, ["show", "pi5", *json_arguments])
+
+    assert code == 30
+    assert json.loads(stdout) == {
+        "schema_version": 1,
+        "status": "fatal",
+        "exit_code": 30,
+        "error_code": "CONFIGURATION_ERROR",
+        "message": "indexed host file is missing: " + str(config_root / "hosts" / "pi5.yaml"),
+    }
     assert stderr.startswith("error:")
     assert "error:" not in stdout
 

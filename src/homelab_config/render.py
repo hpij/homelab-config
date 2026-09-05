@@ -10,7 +10,7 @@ import yaml
 from .context import ResolvedHostContext
 from .models import Appliance, Host
 
-SCHEMA_VERSION = 1
+DOCUMENT_SCHEMA_VERSION = 1
 
 
 def host_document(host: Host) -> dict[str, Any]:
@@ -64,12 +64,15 @@ def appliance_document(appliance: Appliance) -> dict[str, Any]:
 
 
 def hosts_document(hosts: tuple[Host, ...]) -> dict[str, Any]:
-    return {"schema_version": SCHEMA_VERSION, "hosts": [host_document(host) for host in hosts]}
+    return {
+        "schema_version": DOCUMENT_SCHEMA_VERSION,
+        "hosts": [host_document(host) for host in hosts],
+    }
 
 
 def host_contexts_document(contexts: tuple[ResolvedHostContext, ...]) -> dict[str, Any]:
     return {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": DOCUMENT_SCHEMA_VERSION,
         "hosts": [
             {
                 "configuration": host_document(context.host),
@@ -87,7 +90,7 @@ def resolved_host_document(host: Host) -> dict[str, Any]:
     """Preserve homelab-update's successful need-to-know resolver contract exactly."""
 
     return {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": DOCUMENT_SCHEMA_VERSION,
         "status": "ready",
         "exit_code": 0,
         "host_id": host.host_id,
@@ -98,7 +101,7 @@ def resolved_host_document(host: Host) -> dict[str, Any]:
 
 def resolved_appliance_document(appliance: Appliance) -> dict[str, Any]:
     return {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": DOCUMENT_SCHEMA_VERSION,
         "status": "ready",
         "exit_code": 0,
         "appliance_id": appliance.appliance_id,
@@ -111,7 +114,7 @@ def resolved_appliance_document(appliance: Appliance) -> dict[str, Any]:
 
 def fatal_document(error_code: str, message: str) -> dict[str, Any]:
     return {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": DOCUMENT_SCHEMA_VERSION,
         "status": "fatal",
         "exit_code": 30,
         "error_code": error_code,

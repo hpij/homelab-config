@@ -12,7 +12,7 @@ from .context import load_host_context
 from .errors import ConfigurationError, HomelabConfigError, SelectionError
 from .inventory import load_inventory, select_hosts
 from .render import (
-    SCHEMA_VERSION,
+    DOCUMENT_SCHEMA_VERSION,
     fatal_document,
     host_contexts_document,
     hosts_document,
@@ -73,8 +73,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(arguments: Sequence[str] | None = None) -> int:
     args = list(sys.argv[1:] if arguments is None else arguments)
-    json_mode = _requested_json_mode(args)
     parsed = build_parser().parse_args(args)
+    json_mode = getattr(parsed, "json_mode", None)
     try:
         inventory = load_inventory(parsed.config_root)
         if parsed.command == "validate":
@@ -84,7 +84,10 @@ def main(arguments: Sequence[str] | None = None) -> int:
                 f"{len(inventory.appliances)} {appliance_label}."
             )
         elif parsed.command == "list-hosts":
-            document = {"schema_version": SCHEMA_VERSION, "hosts": list(inventory.host_ids)}
+            document = {
+                "schema_version": DOCUMENT_SCHEMA_VERSION,
+                "hosts": list(inventory.host_ids),
+            }
             _print_json_or_lines(document, inventory.host_ids, parsed.json_mode)
         elif parsed.command == "show":
             selected = select_hosts(inventory, parsed.hosts)
@@ -108,7 +111,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
             )
         elif parsed.command == "list-appliances":
             document = {
-                "schema_version": SCHEMA_VERSION,
+                "schema_version": DOCUMENT_SCHEMA_VERSION,
                 "appliances": list(inventory.appliance_ids),
             }
             _print_json_or_lines(document, inventory.appliance_ids, parsed.json_mode)
@@ -133,16 +136,6 @@ def _add_optional_json(parser: argparse.ArgumentParser) -> None:
 
 def _add_required_json(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--json", choices=JSON_MODES, dest="json_mode", required=True)
-
-
-def _requested_json_mode(arguments: Sequence[str]) -> str | None:
-    try:
-        index = arguments.index("--json")
-    except ValueError:
-        return None
-    if index + 1 < len(arguments) and arguments[index + 1] in JSON_MODES:
-        return arguments[index + 1]
-    return None
 
 
 def _print_document(document: object, json_mode: str | None) -> None:
