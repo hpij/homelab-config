@@ -115,13 +115,15 @@ def main(arguments: Sequence[str] | None = None) -> int:
                 "appliances": list(inventory.appliance_ids),
             }
             _print_json_or_lines(document, inventory.appliance_ids, parsed.json_mode)
-        else:
+        elif parsed.command == "resolve-appliance":
             if parsed.appliance_id == "all":
                 raise SelectionError(
                     "'all' is unsupported; resolve exactly one canonical APPLIANCE_ID"
                 )
             appliance = inventory.appliance(parsed.appliance_id)
             print(render_json(resolved_appliance_document(appliance), parsed.json_mode))
+        else:
+            raise RuntimeError(f"unhandled command: {parsed.command}")
     except HomelabConfigError as error:
         print(f"error: {error}", file=sys.stderr)
         if json_mode:

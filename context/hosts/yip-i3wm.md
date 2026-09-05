@@ -37,6 +37,6 @@ The following storage mounts are expected:
 
 ## Software & Lifecycle Notes
 
-* Software may intentionally come from different sources such as APT, Snap, Flatpak, AppImage, source builds, Git checkouts,
+* Software may intentionally come from different sources such as APT, Snap, Flatpak, AppImage, source builds, Git checkouts.
 * Duplicate installations of the same application across those package managers are configuration drift.
 

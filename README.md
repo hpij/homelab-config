@@ -140,7 +140,9 @@ validates the entire indexed configuration and context graph before returning it
 Declared `software` answers which stable management surfaces a host is expected to have. The
 separate `management.homelab_update.mechanisms` list answers which non-Docker mechanisms the update
 tool currently owns for that host. A capability may exist without being in updater scope: the VPS
-declares Snap/LXD as accepted while Snap is deliberately absent from its updater mechanisms.
+declares Snap as a structured package-manager capability. The accepted preinstalled LXD
+environment is semantic host context, while Snap is deliberately absent from its updater
+mechanisms.
 
 Every seeded host declares the Docker runtime with
 `managed_workloads_owner: homelab-docker`. This means that `homelab-docker` owns the desired state
