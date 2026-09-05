@@ -13,7 +13,7 @@ software:
     apt: {}
   runtimes:
     docker:
-      workload_desired_state_owner: homelab-docker
+      managed_workloads_owner: homelab-docker
   components: {}
 
 management:

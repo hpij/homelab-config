@@ -31,17 +31,18 @@ def host_document(host: Host) -> dict[str, Any]:
         },
         "runtimes": {
             capability.capability_id: (
-                {"workload_desired_state_owner": capability.workload_desired_state_owner}
-                if capability.workload_desired_state_owner is not None
+                {"managed_workloads_owner": capability.managed_workloads_owner}
+                if capability.managed_workloads_owner is not None
                 else {}
             )
             for capability in host.software.runtimes
         },
         "components": {capability.capability_id: {} for capability in host.software.components},
     }
-    document["management"] = {
-        "homelab_update": {"mechanisms": list(host.management.homelab_update.mechanisms)}
-    }
+    if host.management is not None and host.management.homelab_update is not None:
+        document["management"] = {
+            "homelab_update": {"mechanisms": list(host.management.homelab_update.mechanisms)}
+        }
     if host.context.include:
         document["context"] = {"include": list(host.context.include)}
     return document

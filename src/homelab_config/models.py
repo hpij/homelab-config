@@ -32,7 +32,7 @@ class PackageManager:
 @dataclass(frozen=True)
 class RuntimeCapability:
     capability_id: str
-    workload_desired_state_owner: str | None = None
+    managed_workloads_owner: str | None = None
 
 
 @dataclass(frozen=True)
@@ -54,7 +54,7 @@ class HomelabUpdateManagement:
 
 @dataclass(frozen=True)
 class Management:
-    homelab_update: HomelabUpdateManagement
+    homelab_update: HomelabUpdateManagement | None = None
 
 
 @dataclass(frozen=True)
@@ -69,7 +69,7 @@ class Host:
     operator: Operator
     availability: Availability | None
     software: Software
-    management: Management
+    management: Management | None
     context: HostContext
 
     @property

@@ -142,8 +142,14 @@ separate `management.homelab_update.mechanisms` list answers which non-Docker me
 tool currently owns for that host. A capability may exist without being in updater scope: the VPS
 declares Snap/LXD as accepted while Snap is deliberately absent from its updater mechanisms.
 
-Every host declares the Docker runtime with
-`workload_desired_state_owner: homelab-docker`. This is only an ownership pointer. Host and stack
-membership, Compose definitions, images, and deployment behavior are not duplicated here and stay
-in `homelab-docker`.
+Every seeded host declares the Docker runtime with
+`managed_workloads_owner: homelab-docker`. This means that `homelab-docker` owns the desired state
+of Docker workloads managed by that repository; it does not imply ownership of every Docker
+workload running on the host. Host and stack membership, Compose definitions, images, and
+deployment behavior are not duplicated here and stay in `homelab-docker`.
 
+The `management` section and its `homelab_update` subsection are optional. Hosts outside the
+updater's scope may omit them entirely; an explicitly present empty `management` section is also
+valid. Rendered documents omit absent management data rather than inventing an empty updater
+scope. When an updater scope is present, every mechanism must match a declared package manager or
+component on that host.

@@ -9,6 +9,7 @@ from io import StringIO
 from pathlib import Path
 
 import pytest
+import yaml
 
 from homelab_config.cli import main
 
@@ -88,6 +89,8 @@ def test_show_single_host_excludes_other_hosts_and_context(config_root: Path) ->
     assert stderr == ""
     assert [item["host_id"] for item in document["hosts"]] == ["pi5"]
     assert "context" not in document["hosts"][0]
+    assert "managed_workloads_owner" in stdout
+    assert "workload_desired_state_owner" not in stdout
     assert "content" not in stdout
     assert "pi4" not in stdout
 
@@ -105,6 +108,19 @@ def test_show_omitted_and_explicit_subset_selection(config_root: Path) -> None:
     code, stdout, _ = invoke(config_root, ["show", "pi5", "pi4", "--json", "compact"])
     assert code == 0
     assert [item["host_id"] for item in json.loads(stdout)["hosts"]] == ["pi5", "pi4"]
+
+
+def test_show_json_omits_optional_management_when_absent(config_root: Path) -> None:
+    path = config_root / "hosts" / "pi5.yaml"
+    document = yaml.safe_load(path.read_text())
+    document.pop("management")
+    path.write_text(yaml.safe_dump(document, sort_keys=False))
+
+    code, stdout, stderr = invoke(config_root, ["show", "pi5", "--json", "compact"])
+    shown = json.loads(stdout)["hosts"][0]
+    assert code == 0
+    assert stderr == ""
+    assert "management" not in shown
 
 
 def test_context_single_host_is_bounded_and_ordered(config_root: Path) -> None:

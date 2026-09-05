@@ -14,7 +14,7 @@ software:
     snap: {}
   runtimes:
     docker:
-      workload_desired_state_owner: homelab-docker
+      managed_workloads_owner: homelab-docker
   components:
     nextcloud_aio: {}
 

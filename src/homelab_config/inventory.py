@@ -98,8 +98,8 @@ def _load_host(path: Path, indexed_id: str) -> Host:
     fields = _mapping(load_yaml_file(path, f"host '{indexed_id}'"), f"host '{indexed_id}'")
     _keys(
         fields,
-        {"host_id", "access", "operator", "software", "management"},
-        {"availability", "context"},
+        {"host_id", "access", "operator", "software"},
+        {"availability", "management", "context"},
         f"host '{indexed_id}'",
     )
     host_id = _canonical_id(fields["host_id"], f"host '{indexed_id}' internal ID")
@@ -119,7 +119,11 @@ def _load_host(path: Path, indexed_id: str) -> Host:
         _parse_availability(fields["availability"], host_id) if "availability" in fields else None
     )
     software = _parse_software(fields["software"], host_id)
-    management = _parse_management(fields["management"], host_id, software)
+    management = (
+        _parse_management(fields["management"], host_id, software)
+        if "management" in fields
+        else None
+    )
     context = _parse_context(fields.get("context"), host_id)
     return Host(host_id, access, operator, availability, software, management, context)
 
@@ -233,17 +237,12 @@ def _parse_runtimes(value: object, host_id: str) -> tuple[RuntimeCapability, ...
         capability_id = _canonical_id(raw_id, f"host '{host_id}' runtime ID")
         subject = f"host '{host_id}' runtime '{capability_id}' metadata"
         metadata_fields = _mapping(metadata, subject)
-        _keys(metadata_fields, set(), {"workload_desired_state_owner"}, subject)
+        _keys(metadata_fields, set(), {"managed_workloads_owner"}, subject)
         owner = (
-            _string(metadata_fields["workload_desired_state_owner"], f"{subject} owner")
-            if "workload_desired_state_owner" in metadata_fields
+            _string(metadata_fields["managed_workloads_owner"], f"{subject} owner")
+            if "managed_workloads_owner" in metadata_fields
             else None
         )
-        if capability_id == "docker" and owner != "homelab-docker":
-            raise ConfigurationError(
-                f"host '{host_id}' Docker runtime must declare "
-                "workload_desired_state_owner=homelab-docker"
-            )
         result.append(RuntimeCapability(capability_id, owner))
     return tuple(result)
 
@@ -251,7 +250,9 @@ def _parse_runtimes(value: object, host_id: str) -> tuple[RuntimeCapability, ...
 def _parse_management(value: object, host_id: str, software: Software) -> Management:
     subject = f"host '{host_id}' management"
     fields = _mapping(value, subject)
-    _keys(fields, {"homelab_update"}, set(), subject)
+    _keys(fields, set(), {"homelab_update"}, subject)
+    if "homelab_update" not in fields:
+        return Management()
     update_subject = f"host '{host_id}' homelab_update management"
     update = _mapping(fields["homelab_update"], update_subject)
     _keys(update, {"mechanisms"}, set(), update_subject)

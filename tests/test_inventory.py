@@ -10,6 +10,7 @@ from homelab_config import load_inventory, select_hosts
 from homelab_config.context import load_host_context
 from homelab_config.errors import ConfigurationError, SelectionError
 from homelab_config.models import Access, Appliance, Host
+from homelab_config.render import host_document
 
 
 def _read_host(config_root: Path, host_id: str) -> dict[str, object]:
@@ -63,7 +64,7 @@ def test_seeded_host_capabilities_management_scope_and_availability(config_root:
             tuple(item.capability_id for item in host.software.package_managers),
             tuple(item.capability_id for item in host.software.runtimes),
             tuple(item.capability_id for item in host.software.components),
-            host.management.homelab_update.mechanisms,
+            host.management.homelab_update.mechanisms if host.management else None,
             host.availability.mode if host.availability else None,
         )
         for host in inventory.hosts
@@ -83,6 +84,42 @@ def test_local_and_ssh_hosts_parse_without_inferred_identity(config_root: Path) 
     assert local.operator.sudo == "password_required"
     assert remote.access == Access("ssh", "vps")
     assert remote.ssh_target == "yip@vps"
+
+
+def test_host_without_management_section_is_valid(config_root: Path) -> None:
+    document = _read_host(config_root, "pi5")
+    document.pop("management")
+    _write_host(config_root, "pi5", document)
+
+    host = load_inventory(config_root).host("pi5")
+    assert host.management is None
+
+
+def test_management_without_homelab_update_is_valid_and_not_rendered_as_scope(
+    config_root: Path,
+) -> None:
+    document = _read_host(config_root, "pi5")
+    document["management"] = {}
+    _write_host(config_root, "pi5", document)
+
+    host = load_inventory(config_root).host("pi5")
+    assert host.management is not None
+    assert host.management.homelab_update is None
+
+
+@pytest.mark.parametrize("management", [None, {}])
+def test_absent_management_data_is_omitted_from_rendered_host(
+    config_root: Path, management: object
+) -> None:
+    document = _read_host(config_root, "pi5")
+    if management is None:
+        document.pop("management")
+    else:
+        document["management"] = management
+    _write_host(config_root, "pi5", document)
+
+    rendered = host_document(load_inventory(config_root).host("pi5"))
+    assert "management" not in rendered
 
 
 def test_inventory_models_are_frozen(config_root: Path) -> None:
@@ -236,6 +273,57 @@ def test_undeclared_update_mechanism_is_rejected(config_root: Path) -> None:
         load_inventory(config_root)
 
 
+@pytest.mark.parametrize(
+    ("mechanisms", "message"),
+    [([], "must not be empty"), (["apt", "apt"], "duplicate homelab_update mechanisms")],
+)
+def test_invalid_updater_mechanisms_are_rejected(
+    config_root: Path, mechanisms: list[str], message: str
+) -> None:
+    document = _read_host(config_root, "pi5")
+    document["management"]["homelab_update"]["mechanisms"] = mechanisms  # type: ignore[index]
+    _write_host(config_root, "pi5", document)
+    with pytest.raises(ConfigurationError, match=message):
+        load_inventory(config_root)
+
+
+def test_docker_managed_workloads_owner_is_optional(config_root: Path) -> None:
+    document = _read_host(config_root, "pi5")
+    document["software"]["runtimes"]["docker"] = {}  # type: ignore[index]
+    _write_host(config_root, "pi5", document)
+
+    docker = next(
+        item
+        for item in load_inventory(config_root).host("pi5").software.runtimes
+        if item.capability_id == "docker"
+    )
+    assert docker.managed_workloads_owner is None
+
+
+@pytest.mark.parametrize("owner", ["", " owner ", "   "])
+def test_docker_managed_workloads_owner_must_be_trimmed_nonempty(
+    config_root: Path, owner: str
+) -> None:
+    document = _read_host(config_root, "pi5")
+    document["software"]["runtimes"]["docker"] = {  # type: ignore[index]
+        "managed_workloads_owner": owner
+    }
+    _write_host(config_root, "pi5", document)
+
+    with pytest.raises(ConfigurationError, match="owner must be a non-empty trimmed string"):
+        load_inventory(config_root)
+
+
+def test_old_docker_owner_field_is_rejected_as_unknown_configuration(config_root: Path) -> None:
+    path = config_root / "hosts" / "pi5.yaml"
+    path.write_text(
+        path.read_text().replace("managed_workloads_owner", "workload_desired_state_owner")
+    )
+
+    with pytest.raises(ConfigurationError, match="unexpected field: workload_desired_state_owner"):
+        load_inventory(config_root)
+
+
 def test_missing_context_include_is_rejected(config_root: Path) -> None:
     document = _read_host(config_root, "pi5")
     document["context"] = {"include": ["exceptions/missing"]}
@@ -276,10 +364,12 @@ def test_declared_capabilities_are_distinct_from_updater_scope(config_root: Path
     vps = inventory.host("vps-strato")
 
     assert tuple(item.capability_id for item in vps.software.package_managers) == ("apt", "snap")
+    assert vps.management is not None
+    assert vps.management.homelab_update is not None
     assert vps.management.homelab_update.mechanisms == ("apt", "nextcloud_aio")
     for host in inventory.hosts:
         docker = next(item for item in host.software.runtimes if item.capability_id == "docker")
-        assert docker.workload_desired_state_owner == "homelab-docker"
+        assert docker.managed_workloads_owner == "homelab-docker"
 
 
 def test_central_config_has_no_docker_stack_membership(config_root: Path) -> None:
